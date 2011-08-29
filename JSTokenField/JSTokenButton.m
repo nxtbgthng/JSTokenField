@@ -85,5 +85,13 @@
     [super dealloc];
 }
 
+- (CGSize)sizeThatFits:(CGSize)size;
+{
+    CGSize result = [super sizeThatFits:size];
+    result.width += 20;
+    result.height = 25;
+    return result;
+}
+
 
 @end

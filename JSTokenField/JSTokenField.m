@@ -53,6 +53,7 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 @synthesize textField = _textField;
 @synthesize label = _label;
 @synthesize delegate = _delegate;
+@synthesize editMode = _editMode;
 
 - (id)initWithFrame:(CGRect)frame
 {
@@ -94,6 +95,7 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 		[_textField setBorderStyle:UITextBorderStyleNone];
 		[_textField setBackground:nil];
 		[_textField setBackgroundColor:[UIColor clearColor]];
+        
 		
 //		[_textField.layer setBorderColor:[[UIColor redColor] CGColor]];
 //		[_textField.layer setBorderWidth:1.0];
@@ -225,28 +227,40 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	
 	currentRect.origin.x += _label.frame.size.width + _label.frame.origin.x + WIDTH_PADDING;
 	
-	for (UIButton *token in _tokens)
-	{
-		CGRect frame = [token frame];
-		
-		if ((currentRect.origin.x + frame.size.width) > self.frame.size.width)
-		{
-			currentRect.origin = CGPointMake(WIDTH_PADDING, (currentRect.origin.y + frame.size.height + HEIGHT_PADDING));
-		}
-		
-		frame.origin.x = currentRect.origin.x;
-		frame.origin.y = currentRect.origin.y + HEIGHT_PADDING;
-		
-		[token setFrame:frame];
-		
-		if (![token superview])
-		{
-			[self addSubview:token];
-		}
-		
-		currentRect.origin.x += frame.size.width + WIDTH_PADDING;
-		currentRect.size = frame.size;
-	}
+    if (_editMode) {
+        for (UIButton *token in _tokens) {
+            
+            token.hidden = NO;
+            [token sizeToFit];
+            CGRect frame = [token frame];
+            
+            if ((currentRect.origin.x + frame.size.width) > self.frame.size.width)
+            {
+                currentRect.origin = CGPointMake(WIDTH_PADDING, (currentRect.origin.y + frame.size.height + HEIGHT_PADDING));
+            }
+            
+            frame.origin.x = currentRect.origin.x;
+            frame.origin.y = currentRect.origin.y + HEIGHT_PADDING;
+            
+            [token setFrame:frame];
+            
+            if (![token superview])
+            {
+                [self addSubview:token];
+            }
+            
+            currentRect.origin.x += frame.size.width + WIDTH_PADDING;
+            currentRect.size = frame.size;
+        }
+    } else {
+        NSMutableArray *tokenLabels = [NSMutableArray array];
+        for (UIButton *token in _tokens) {
+            token.hidden = YES;
+            [tokenLabels addObject:[token titleForState:UIControlStateNormal]];
+        }
+        _textField.text = [tokenLabels componentsJoinedByString:@", "];
+    }
+	
 	
 	CGRect textFieldFrame = [_textField frame];
 	
@@ -267,11 +281,16 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	CGRect selfFrame = [self frame];
 	selfFrame.size.height = textFieldFrame.origin.y + textFieldFrame.size.height + HEIGHT_PADDING;
 	
-	[UIView animateWithDuration:0.3
-					 animations:^{
-						 [self setFrame:selfFrame];
-					 }
-					 completion:nil];
+    if ([self.delegate respondsToSelector:@selector(tokenFieldFrameWillChange:)]) {
+        [self.delegate tokenFieldFrameWillChange:self];
+    }
+    
+    [self setFrame:selfFrame];
+    
+    
+    if ([self.delegate respondsToSelector:@selector(tokenField:frameDidChange:)]) {
+        [self.delegate tokenField:self frameDidChange:self.frame];
+    }
 }
 
 - (void)toggle:(id)sender
@@ -298,6 +317,21 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	}
 	
 	[[NSNotificationCenter defaultCenter] postNotificationName:JSTokenFieldFrameDidChangeNotification object:self userInfo:[[userInfo copy] autorelease]];
+}
+
+- (void)setEditMode:(BOOL)value;
+{
+    if (_editMode != value) {
+        _editMode = value;
+        
+        if (_editMode) {
+            [_textField becomeFirstResponder];
+        } else {
+            [_hiddenTextField becomeFirstResponder];
+        }
+        
+        [self setNeedsLayout];
+    }
 }
 
 #pragma mark -
@@ -378,19 +412,23 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	return NO;
 }
 
+- (void)textFieldDidBeginEditing:(UITextField *)textField;
+{
+    if (textField == _textField) {
+        textField.text = @"";
+        [self setEditMode:YES];
+    }
+}
+
 - (void)textFieldDidEndEditing:(UITextField *)textField
 {
-	if (textField == _textField)
-	{
+	if (textField == _textField) {
 		if ([[textField text] length] > 1)
 		{
 			[self addTokenWithTitle:[textField text] representedObject:[textField text]];
 			[textField setText:@" "];
 		}
-	}
-	
-	if (textField == _hiddenTextField)
-	{
+	} else if (textField == _hiddenTextField) {
 		for (JSTokenButton *token in _tokens)
 		{
 			[token setToggled:NO];
