@@ -49,6 +49,7 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 
 @implementation JSTokenField
 
+@synthesize contentInset = _contentInset;
 @synthesize tokens = _tokens;
 @synthesize textField = _textField;
 @synthesize label = _label;
@@ -64,16 +65,17 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	
     if ((self = [super initWithFrame:frame]))
 	{
-		[self setBackgroundColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1.0]];
-		UIView *separator = [[[UIView alloc] initWithFrame:CGRectMake(0, frame.size.height-1, frame.size.width, 1)] autorelease];
-		[separator setAutoresizingMask:UIViewAutoresizingFlexibleTopMargin];
-		[self addSubview:separator];
-		[separator setBackgroundColor:[UIColor lightGrayColor]];
+        _editMode = YES;
+        
+//		[self setBackgroundColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1.0]];
+//		UIView *separator = [[[UIView alloc] initWithFrame:CGRectMake(0, frame.size.height-1, frame.size.width, 1)] autorelease];
+//		[separator setAutoresizingMask:UIViewAutoresizingFlexibleTopMargin];
+//		[self addSubview:separator];
+//		[separator setBackgroundColor:[UIColor lightGrayColor]];
 		
 		_label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 0, frame.size.height)];
+        _label.textColor = [UIColor lightGrayColor];
 		[_label setBackgroundColor:[UIColor clearColor]];
-		[_label setTextColor:[UIColor colorWithRed:0.3 green:0.3 blue:0.3 alpha:1.0]];
-		[_label setFont:[UIFont fontWithName:@"Helvetica Neue" size:17.0]];
 		
 		[self addSubview:_label];
 		
@@ -223,7 +225,10 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	CGRect currentRect = CGRectZero;
 	
 	[_label sizeToFit];
-	[_label setFrame:CGRectMake(WIDTH_PADDING, HEIGHT_PADDING, [_label frame].size.width, [_label frame].size.height)];
+	[_label setFrame:CGRectMake(self.contentInset.left,
+                                self.contentInset.top,
+                                [_label frame].size.width,
+                                [_label frame].size.height)];
 	
 	currentRect.origin.x += _label.frame.size.width + _label.frame.origin.x + WIDTH_PADDING;
 	
@@ -236,11 +241,12 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
             
             if ((currentRect.origin.x + frame.size.width) > self.frame.size.width)
             {
-                currentRect.origin = CGPointMake(WIDTH_PADDING, (currentRect.origin.y + frame.size.height + HEIGHT_PADDING));
+                currentRect.origin = CGPointMake(self.contentInset.left,
+                                                 (currentRect.origin.y + frame.size.height + HEIGHT_PADDING));
             }
             
             frame.origin.x = currentRect.origin.x;
-            frame.origin.y = currentRect.origin.y + HEIGHT_PADDING;
+            frame.origin.y = currentRect.origin.y + HEIGHT_PADDING + 4;
             
             [token setFrame:frame];
             
@@ -276,10 +282,10 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 		textFieldFrame.origin = CGPointMake(0, (currentRect.origin.y + currentRect.size.height + HEIGHT_PADDING));
 	}
 	
-	textFieldFrame.origin.y += HEIGHT_PADDING;
+	textFieldFrame.origin.y += self.contentInset.top;
 	[_textField setFrame:textFieldFrame];
 	CGRect selfFrame = [self frame];
-	selfFrame.size.height = textFieldFrame.origin.y + textFieldFrame.size.height + HEIGHT_PADDING;
+	selfFrame.size.height = textFieldFrame.origin.y + textFieldFrame.size.height + self.contentInset.bottom;
 	
     if ([self.delegate respondsToSelector:@selector(tokenFieldFrameWillChange:)]) {
         [self.delegate tokenFieldFrameWillChange:self];
@@ -326,8 +332,14 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
         
         if (_editMode) {
             [_textField becomeFirstResponder];
+            if ([self.delegate respondsToSelector:@selector(tokenFieldDidBeginEditing:)]) {
+                [self.delegate tokenFieldDidBeginEditing:self];
+            }
         } else {
             [_hiddenTextField becomeFirstResponder];
+            if ([self.delegate respondsToSelector:@selector(tokenFieldDidEndEditing:)]) {
+                [self.delegate tokenFieldDidEndEditing:self];
+            }
         }
         
         [self setNeedsLayout];

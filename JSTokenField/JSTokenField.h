@@ -48,8 +48,11 @@ extern NSString *const JSDeletedTokenKey;
 	UILabel *_label;
     
     BOOL _editMode;
+    
+    UIEdgeInsets _contentInset;
 }
 
+@property (nonatomic, assign) UIEdgeInsets contentInset;
 @property (nonatomic, readonly) UITextField *textField;
 @property (nonatomic, retain) UILabel *label;
 @property (nonatomic, readonly, copy) NSMutableArray *tokens;
@@ -69,4 +72,7 @@ extern NSString *const JSDeletedTokenKey;
 @optional
 - (void)tokenFieldFrameWillChange:(JSTokenField *)tokenField;
 - (void)tokenField:(JSTokenField *)tokenField frameDidChange:(CGRect)newFrame;
+
+- (void)tokenFieldDidBeginEditing:(JSTokenField *)tokenField;
+- (void)tokenFieldDidEndEditing:(JSTokenField *)tokenField;
 @end
