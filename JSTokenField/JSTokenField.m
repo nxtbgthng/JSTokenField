@@ -231,7 +231,8 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
                                 [_label frame].size.height)];
 	
 	currentRect.origin.x += _label.frame.size.width + _label.frame.origin.x + WIDTH_PADDING;
-	
+	currentRect.origin.y = self.contentInset.top;
+    
     if (_editMode) {
         for (UIButton *token in _tokens) {
             
@@ -245,8 +246,7 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
                                                  (currentRect.origin.y + frame.size.height + HEIGHT_PADDING));
             }
             
-            frame.origin.x = currentRect.origin.x;
-            frame.origin.y = currentRect.origin.y + HEIGHT_PADDING + 4;
+            frame.origin = currentRect.origin;
             
             [token setFrame:frame];
             
@@ -271,18 +271,15 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	CGRect textFieldFrame = [_textField frame];
 	
 	textFieldFrame.origin = currentRect.origin;
-	
-	if ((self.frame.size.width - textFieldFrame.origin.x) >= 60)
-	{
-		textFieldFrame.size.width = self.frame.size.width - textFieldFrame.origin.x;
-	}
-	else
-	{
-		textFieldFrame.size.width = self.frame.size.width;
-		textFieldFrame.origin = CGPointMake(0, (currentRect.origin.y + currentRect.size.height + HEIGHT_PADDING));
+    
+	if ((self.frame.size.width - textFieldFrame.origin.x) >= 60) {
+		textFieldFrame.size.width = self.bounds.size.width - textFieldFrame.origin.x - self.contentInset.right;
+	} else {
+		textFieldFrame.size.width = self.bounds.size.width - self.contentInset.left - self.contentInset.right;
+		textFieldFrame.origin = CGPointMake(self.contentInset.left,
+                                            (currentRect.origin.y + currentRect.size.height + HEIGHT_PADDING));
 	}
 	
-	textFieldFrame.origin.y += self.contentInset.top;
 	[_textField setFrame:textFieldFrame];
 	CGRect selfFrame = [self frame];
 	selfFrame.size.height = textFieldFrame.origin.y + textFieldFrame.size.height + self.contentInset.bottom;
