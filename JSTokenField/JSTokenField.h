@@ -55,6 +55,7 @@ extern NSString *const JSDeletedTokenKey;
 @property (nonatomic, assign) UIEdgeInsets contentInset;
 @property (nonatomic, readonly) UITextField *textField;
 @property (nonatomic, retain) UILabel *label;
+@property (nonatomic, readonly) UIButton *addButton; 
 @property (nonatomic, readonly, copy) NSMutableArray *tokens;
 @property (nonatomic, assign) id <JSTokenFieldDelegate> delegate;
 @property (nonatomic, assign, getter=inEditMode) BOOL editMode;

@@ -40,10 +40,9 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 #define DEFAULT_HEIGHT 31
 
 @interface JSTokenField ()
-
 - (JSTokenButton *)tokenWithString:(NSString *)string representedObject:(id)obj;
 - (void)deleteHighlightedToken;
-
+@property (nonatomic, readwrite, assign) UIButton *addButton;
 @end
 
 
@@ -53,6 +52,7 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 @synthesize tokens = _tokens;
 @synthesize textField = _textField;
 @synthesize label = _label;
+@synthesize addButton = _addButton;
 @synthesize delegate = _delegate;
 @synthesize editMode = _editMode;
 
@@ -106,6 +106,9 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 		
 		[self addSubview:_textField];
 		
+        _addButton = [UIButton buttonWithType:UIButtonTypeContactAdd];
+        [self addSubview:_addButton];
+        
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(handleTextDidChange:)
 													 name:UITextFieldTextDidChangeNotification
@@ -272,17 +275,25 @@ NSString *const JSDeletedTokenKey = @"JSDeletedTokenKey";
 	
 	textFieldFrame.origin = currentRect.origin;
     
-	if ((self.frame.size.width - textFieldFrame.origin.x) >= 60) {
-		textFieldFrame.size.width = self.bounds.size.width - textFieldFrame.origin.x - self.contentInset.right;
+    [self.addButton sizeToFit];
+    
+	if ((self.frame.size.width - textFieldFrame.origin.x - CGRectGetWidth(self.addButton.frame) - WIDTH_PADDING) >= 60) {
+		textFieldFrame.size.width = self.bounds.size.width - textFieldFrame.origin.x - WIDTH_PADDING - CGRectGetWidth(self.addButton.frame) - self.contentInset.right;
 	} else {
-		textFieldFrame.size.width = self.bounds.size.width - self.contentInset.left - self.contentInset.right;
+		textFieldFrame.size.width = self.bounds.size.width - self.contentInset.left - WIDTH_PADDING - CGRectGetWidth(self.addButton.frame) - self.contentInset.right;
 		textFieldFrame.origin = CGPointMake(self.contentInset.left,
                                             (currentRect.origin.y + currentRect.size.height + HEIGHT_PADDING));
 	}
 	
 	[_textField setFrame:textFieldFrame];
+    
+    CGRect buttonFrame = self.addButton.frame;
+    buttonFrame.origin.x = textFieldFrame.origin.x + textFieldFrame.size.width + WIDTH_PADDING;
+    buttonFrame.origin.y = textFieldFrame.origin.y;
+    self.addButton.frame = buttonFrame;
+    
 	CGRect selfFrame = [self frame];
-	selfFrame.size.height = textFieldFrame.origin.y + textFieldFrame.size.height + self.contentInset.bottom;
+	selfFrame.size.height = buttonFrame.origin.y + buttonFrame.size.height + self.contentInset.bottom;
 	
     if ([self.delegate respondsToSelector:@selector(tokenFieldFrameWillChange:)]) {
         [self.delegate tokenFieldFrameWillChange:self];
